@@ -1,0 +1,37 @@
+# torch is installed CPU-only in Dockerfile before this file runs
+motor>=3.3.0
+pymongo>=4.0.0
+redis>=4.6.0
+akshare>=1.10.0
+slowapi>=0.1.9
+bcrypt>=4.0.0
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+sqlalchemy>=2.0.0
+python-multipart>=0.0.6
+pandas>=2.1.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+yfinance>=0.2.36
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-dotenv>=1.0.0
+openpyxl>=3.1.0
+aiofiles>=23.2.0
+httpx>=0.26.0
+google-generativeai>=0.3.2
+openai>=1.0.0
+
+# TradingAgents dependencies
+langgraph>=0.2.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+langchain-experimental>=0.3.0
+langchain-anthropic>=0.3.0
+langchain-google-genai>=1.0.0
+stockstats>=0.6.0
+rank-bm25>=0.2.2
+backtrader>=1.9.78
+parsel>=1.9.0
+pytz>=2024.1
+rich>=13.0.0

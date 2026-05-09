@@ -1,0 +1,41 @@
+# Environment files with secrets
+.env
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+venv311/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/node_modules/
+
+# Database
+*.db
+*.sqlite
+
+# Uploads
+backend/uploads/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+
+# Redis Windows binaries
+redis/
+
+# TradingAgents local clone
+backend/tradingagents_repo/

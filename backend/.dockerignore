@@ -1,0 +1,13 @@
+venv/
+venv311/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+uploads/
+*.db
+*.sqlite
+.env
+tradingagents_repo/
+.idea/
+.vscode/
