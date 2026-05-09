@@ -11,7 +11,7 @@
 | 前端 | Vue 3 · TypeScript · Vite · Pinia |
 | 后端 | FastAPI · SQLAlchemy · SQLite · MongoDB |
 | 缓存 | Redis |
-| AI | TradingAgents · OpenAI / Anthropic / Google / DeepSeek |
+| AI | LangGraph · LangChain · TradingAgents · OpenAI / Anthropic / Google / DeepSeek |
 | 部署 | Docker Compose · Nginx · Let's Encrypt |
 
 ## 功能
