@@ -55,7 +55,7 @@ services:
       dockerfile: Dockerfile
     container_name: finagent-frontend
     ports:
-      - "80:80"   # serve on port 80 for domain access
+      - "127.0.0.1:8080:80"   # proxied by host nginx
     depends_on:
       - backend
     restart: unless-stopped
