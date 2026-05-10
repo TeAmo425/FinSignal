@@ -151,7 +151,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus as PlusIcon, Search as SearchIcon, FileText as FileTextIcon, Bot as BotIcon, X as XIcon } from 'lucide-vue-next'
-import api from '../../api/index'
+import api from '../api/index'
 
 const router = useRouter()
 const searchQuery = ref('')
