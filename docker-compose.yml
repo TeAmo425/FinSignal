@@ -34,12 +34,14 @@ services:
       - "127.0.0.1:8001:8001"   # only accessible from localhost, not public internet
     volumes:
       - ./backend/uploads:/app/uploads
+      - finagent_db:/app/db
     env_file:
       - ./backend/.env
     environment:
       - ENVIRONMENT=production
       - MONGO_URI=mongodb://mongodb:27017
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - DATABASE_URL=sqlite:////app/db/finagent.db
     depends_on:
       mongodb:
         condition: service_healthy
@@ -61,3 +63,4 @@ services:
 volumes:
   mongo_data:
   redis_data:
+  finagent_db:
