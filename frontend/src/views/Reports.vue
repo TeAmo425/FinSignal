@@ -151,6 +151,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus as PlusIcon, Search as SearchIcon, FileText as FileTextIcon, Bot as BotIcon, X as XIcon } from 'lucide-vue-next'
+import api from '../../api/index'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -171,30 +172,63 @@ interface Report {
 
 const reports = ref<Report[]>([])
 
-function loadReports() {
+function parseResults(results: any[]): Pick<Report, 'decision' | 'summary' | 'sections'> {
+  const pmResult = results.find((r: any) => r.agent === 'portfolio_manager' || r.field === 'final_trade_decision')
+  const decisionMatch = pmResult?.content?.match(/\b(BUY|SELL|HOLD)\b/i)
+  const summary = pmResult?.content?.slice(0, 300) || results[0]?.content?.slice(0, 300) || 'No summary available'
+  return {
+    decision: decisionMatch ? decisionMatch[0].toUpperCase() : null,
+    summary,
+    sections: results.map((r: any) => ({ agent: r.agent || r.field, label: r.label || r.agent, content: r.content })),
+  }
+}
+
+async function loadReports() {
   try {
-    // Load manually saved reports
-    const saved = JSON.parse(localStorage.getItem('finagent_reports') || '[]')
-    // Load from agent cache
-    const cache = JSON.parse(localStorage.getItem('agentCache') || '{}')
-    const cacheReports: Report[] = Object.entries(cache).map(([sym, data]: [string, any]) => {
-      const results: any[] = data.results || []
-      const pmResult = results.find((r: any) => r.agent === 'portfolio_manager' || r.field === 'final_trade_decision')
-      const decisionMatch = pmResult?.content?.match(/\b(BUY|SELL|HOLD)\b/i)
-      const summary = pmResult?.content?.slice(0, 300) || results[0]?.content?.slice(0, 300) || 'No summary available'
-      return {
-        id: `cache_${sym}`,
-        ticker: sym,
-        decision: decisionMatch ? decisionMatch[0].toUpperCase() : null,
-        summary,
-        date: new Date(data.timestamp || Date.now()).toLocaleDateString(),
-        tradeDate: data.date || '—',
-        provider: data.provider || 'AI',
-        analysts: results.length,
-        sections: results.map((r: any) => ({ agent: r.agent || r.field, label: r.label || r.agent, content: r.content })),
+    const seenIds = new Set<string>()
+    const all: Report[] = []
+
+    // 1. Load from server history (persistent, cross-device)
+    try {
+      const res = await api.get('/api/auth/history')
+      for (const item of res.data) {
+        const id = `srv_${item.ticker}_${item.trade_date}`
+        if (seenIds.has(id)) continue
+        seenIds.add(id)
+        const parsed = parseResults(item.results || [])
+        all.push({
+          id,
+          ticker: item.ticker,
+          tradeDate: item.trade_date,
+          provider: item.provider || 'AI',
+          date: new Date(item.created_at).toLocaleDateString(),
+          analysts: (item.results || []).length,
+          ...parsed,
+        })
       }
-    })
-    reports.value = [...saved, ...cacheReports].sort((a, b) => b.date.localeCompare(a.date))
+    } catch { /* not logged in or server error — continue */ }
+
+    // 2. Supplement with current session cache
+    try {
+      const cache = JSON.parse(sessionStorage.getItem('agentCache') || '{}')
+      for (const [sym, data] of Object.entries(cache) as [string, any][]) {
+        const id = `cache_${sym}`
+        if (seenIds.has(id)) continue
+        seenIds.add(id)
+        const parsed = parseResults(data.results || [])
+        all.push({
+          id,
+          ticker: sym,
+          tradeDate: data.date || '—',
+          provider: data.provider || 'AI',
+          date: new Date(data.timestamp || Date.now()).toLocaleDateString(),
+          analysts: (data.results || []).length,
+          ...parsed,
+        })
+      }
+    } catch { /* ignore */ }
+
+    reports.value = all
   } catch {
     reports.value = []
   }
@@ -224,23 +258,17 @@ function deleteReport(id: string) {
   if (id.startsWith('cache_')) {
     const sym = id.replace('cache_', '')
     try {
-      const cache = JSON.parse(localStorage.getItem('agentCache') || '{}')
+      const cache = JSON.parse(sessionStorage.getItem('agentCache') || '{}')
       delete cache[sym]
-      localStorage.setItem('agentCache', JSON.stringify(cache))
-    } catch {}
-  } else {
-    try {
-      const saved = JSON.parse(localStorage.getItem('finagent_reports') || '[]')
-      localStorage.setItem('finagent_reports', JSON.stringify(saved.filter((r: any) => r.id !== id)))
+      sessionStorage.setItem('agentCache', JSON.stringify(cache))
     } catch {}
   }
-  loadReports()
+  reports.value = reports.value.filter(r => r.id !== id)
 }
 
 function clearAll() {
   if (!confirm('Delete all reports?')) return
-  localStorage.removeItem('finagent_reports')
-  localStorage.removeItem('agentCache')
+  sessionStorage.removeItem('agentCache')
   loadReports()
 }
 
