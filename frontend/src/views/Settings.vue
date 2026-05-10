@@ -27,7 +27,7 @@
     <div v-if="activeTab === 'API Keys'">
       <div class="card" style="margin-bottom:16px; padding:20px;">
         <p style="font-size:13px; color:var(--txt-2); margin-bottom:16px; line-height:1.5;">
-          API keys are stored in sessionStorage and cleared when you close the tab. They are sent to the backend only to forward to the respective AI provider.
+          API keys are saved to your account and synced across browsers. They are only used to forward requests to the respective AI provider.
         </p>
 
         <div v-for="key in apiKeys" :key="key.id" style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--border);">
@@ -167,10 +167,12 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { Eye as EyeIcon, EyeOff as EyeOffIcon, Trash as TrashIcon } from 'lucide-vue-next'
+import api from '../api/index'
 
 const tabs = ['API Keys', 'Preferences', 'Notifications']
 const activeTab = ref('API Keys')
 const savedMsg = ref('')
+const keysLoading = ref(false)
 
 const apiKeys = [
   { id: 'openai_api_key',    label: 'OpenAI',      hint: 'GPT-4o, GPT-4o-mini', placeholder: 'sk-...' },
@@ -186,17 +188,41 @@ function getKeyValue(id: string): string {
   return sessionStorage.getItem(id) || ''
 }
 
-function saveKey(id: string) {
-  if (keyValues[id]?.trim()) {
-    sessionStorage.setItem(id, keyValues[id].trim())
+async function saveKey(id: string) {
+  const val = keyValues[id]?.trim()
+  if (!val) return
+  sessionStorage.setItem(id, val)
+  try {
+    await api.put('/api/auth/settings/keys', { keys: { [id]: val } })
     showSaved('API key saved!')
+  } catch {
+    showSaved('Saved locally (sync failed)')
   }
 }
 
-function deleteKey(id: string) {
+async function deleteKey(id: string) {
   sessionStorage.removeItem(id)
   keyValues[id] = ''
+  try {
+    await api.put('/api/auth/settings/keys', { keys: { [id]: '' } })
+  } catch { /* ignore */ }
   showSaved('API key removed')
+}
+
+async function loadKeysFromServer() {
+  keysLoading.value = true
+  try {
+    const res = await api.get('/api/auth/settings/keys/values')
+    const data: Record<string, string> = res.data
+    for (const [k, v] of Object.entries(data)) {
+      if (v) {
+        sessionStorage.setItem(k, v)
+        keyValues[k] = v
+      }
+    }
+  } catch { /* ignore, use local */ } finally {
+    keysLoading.value = false
+  }
 }
 
 const prefs = reactive({
@@ -228,8 +254,9 @@ function showSaved(msg: string) {
   setTimeout(() => { savedMsg.value = '' }, 2500)
 }
 
-onMounted(() => {
+onMounted(async () => {
   apiKeys.forEach(k => { keyValues[k.id] = getKeyValue(k.id) })
+  await loadKeysFromServer()
 })
 </script>
 

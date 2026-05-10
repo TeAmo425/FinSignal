@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useTradingAgentStore } from '../stores/tradingAgent'
 import type { LLMProvider } from '../stores/tradingAgent'
+import api from '../api/index'
 
 const API_URL = import.meta.env.VITE_API_URL ?? ''
 
@@ -101,7 +102,7 @@ export function useTradingAgent() {
           } else if (event.type === 'done') {
             store.running = false
             store.statusMsg = 'Analysis complete'
-            // Cache result
+            // Cache in sessionStorage
             try {
               const cache = JSON.parse(sessionStorage.getItem('agentCache') || '{}')
               cache[opts.ticker.toUpperCase()] = {
@@ -111,7 +112,16 @@ export function useTradingAgent() {
                 provider: opts.provider || store.provider,
               }
               sessionStorage.setItem('agentCache', JSON.stringify(cache))
-            } catch { /* ignore cache errors */ }
+            } catch { /* ignore */ }
+            // Save to server history
+            try {
+              await api.post('/api/auth/history', {
+                ticker: opts.ticker.toUpperCase(),
+                trade_date: opts.date,
+                provider: opts.provider || store.provider,
+                results: store.results,
+              })
+            } catch { /* ignore, history is best-effort */ }
           } else if (event.type === 'error') {
             throw new Error(event.message)
           }
