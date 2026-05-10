@@ -185,19 +185,22 @@ function parseResults(results: any[]): Pick<Report, 'decision' | 'summary' | 'se
 
 async function loadReports() {
   try {
-    const seenIds = new Set<string>()
     const all: Report[] = []
+    const serverTickers = new Set<string>()
 
     // 1. Load from server history (persistent, cross-device)
     try {
       const res = await api.get('/api/auth/history')
+      const seenSrvIds = new Set<string>()
       for (const item of res.data) {
-        const id = `srv_${item.ticker}_${item.trade_date}`
-        if (seenIds.has(id)) continue
-        seenIds.add(id)
+        // Deduplicate server entries by ticker+date
+        const key = `${item.ticker}_${item.trade_date}`
+        if (seenSrvIds.has(key)) continue
+        seenSrvIds.add(key)
+        serverTickers.add(item.ticker)
         const parsed = parseResults(item.results || [])
         all.push({
-          id,
+          id: `srv_${key}`,
           ticker: item.ticker,
           tradeDate: item.trade_date,
           provider: item.provider || 'AI',
@@ -208,21 +211,19 @@ async function loadReports() {
       }
     } catch { /* not logged in or server error — continue */ }
 
-    // 2. Supplement with current session cache
+    // 2. Supplement with session cache only for tickers not already from server
     try {
       const cache = JSON.parse(sessionStorage.getItem('agentCache') || '{}')
       for (const [sym, data] of Object.entries(cache) as [string, any][]) {
-        const id = `cache_${sym}`
-        if (seenIds.has(id)) continue
-        seenIds.add(id)
-        const parsed = parseResults(data.results || [])
+        if (serverTickers.has(sym)) continue  // already loaded from server
+        const parsed = parseResults((data as any).results || [])
         all.push({
-          id,
+          id: `cache_${sym}`,
           ticker: sym,
-          tradeDate: data.date || '—',
-          provider: data.provider || 'AI',
-          date: new Date(data.timestamp || Date.now()).toLocaleDateString(),
-          analysts: (data.results || []).length,
+          tradeDate: (data as any).date || '—',
+          provider: (data as any).provider || 'AI',
+          date: new Date((data as any).timestamp || Date.now()).toLocaleDateString(),
+          analysts: ((data as any).results || []).length,
           ...parsed,
         })
       }
