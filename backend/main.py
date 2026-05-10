@@ -9,12 +9,24 @@ import os
 
 load_dotenv()
 
+from sqlalchemy import text
 from database import engine, Base
 import models.user
 import models.dataset
 import models.stock
 
 Base.metadata.create_all(bind=engine)
+
+# Auto-migrate: add new columns to existing tables if they don't exist
+with engine.connect() as _conn:
+    for _stmt in [
+        "ALTER TABLE users ADD COLUMN api_keys TEXT",
+    ]:
+        try:
+            _conn.execute(text(_stmt))
+            _conn.commit()
+        except Exception:
+            pass  # column already exists
 
 from routers import auth, datasets, stocks, forecast, anomalies, chat, reports, trading_agents
 from routers.paper_trading import router as paper_router
