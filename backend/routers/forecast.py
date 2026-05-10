@@ -12,12 +12,14 @@ class ForecastRequest(BaseModel):
     confidence_interval: float = Field(0.95, ge=0.5, le=0.99)
 
 @router.post("/{symbol}")
-def generate_forecast(symbol: str, req: ForecastRequest, current_user: User = Depends(get_current_user)):
+async def generate_forecast(symbol: str, req: ForecastRequest, current_user: User = Depends(get_current_user)):
+    import asyncio
     sym = symbol.upper()
-    stock_data = get_stock_data(sym, period="2y")
+    stock_data = await get_stock_data(sym, period="2y")
     if "error" in stock_data:
         raise HTTPException(status_code=404, detail=stock_data["error"])
-    result = forecast_stock(stock_data["data"], horizon=req.horizon, symbol=sym)
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, forecast_stock, stock_data["data"], req.horizon, sym)
     if "error" in result:
         raise HTTPException(status_code=500, detail=result["error"])
     return {

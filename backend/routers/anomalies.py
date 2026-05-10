@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/anomalies", tags=["anomalies"])
 
 @router.post("/{symbol}")
-def detect_stock_anomalies_endpoint(symbol: str, current_user: User = Depends(get_current_user)):
-    stock_data = get_stock_data(symbol.upper(), period="1y")
+async def detect_stock_anomalies_endpoint(symbol: str, current_user: User = Depends(get_current_user)):
+    stock_data = await get_stock_data(symbol.upper(), period="1y")
     if "error" in stock_data:
         raise HTTPException(status_code=404, detail=stock_data["error"])
     result = detect_stock_anomalies(stock_data["data"])

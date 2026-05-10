@@ -17,10 +17,10 @@ class ReportRequest(BaseModel):
     include_forecast: bool = True
 
 @router.post("/generate")
-def generate_report(req: ReportRequest, current_user: User = Depends(get_current_user)):
+async def generate_report(req: ReportRequest, current_user: User = Depends(get_current_user)):
     if req.type == "stock":
         symbol = req.id.upper()
-        stock_data = get_stock_data(symbol, period="1y")
+        stock_data = await get_stock_data(symbol, period="1y")
         if "error" in stock_data:
             raise HTTPException(status_code=404, detail=stock_data["error"])
 
