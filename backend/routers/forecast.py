@@ -14,12 +14,19 @@ class ForecastRequest(BaseModel):
 @router.post("/{symbol}")
 async def generate_forecast(symbol: str, req: ForecastRequest, current_user: User = Depends(get_current_user)):
     import asyncio
+    from services.forecasting import _statistical_fallback
     sym = symbol.upper()
     stock_data = await get_stock_data(sym, period="2y")
     if "error" in stock_data:
         raise HTTPException(status_code=404, detail=stock_data["error"])
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, forecast_stock, stock_data["data"], req.horizon, sym)
+    try:
+        result = await asyncio.wait_for(
+            loop.run_in_executor(None, forecast_stock, stock_data["data"], req.horizon, sym),
+            timeout=25.0,
+        )
+    except asyncio.TimeoutError:
+        result = _statistical_fallback(stock_data["data"], req.horizon)
     if "error" in result:
         raise HTTPException(status_code=500, detail=result["error"])
     return {

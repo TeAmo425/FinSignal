@@ -29,16 +29,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-SEQ_LEN = 60          # lookback window (trading days)
+SEQ_LEN = 40          # lookback window (trading days)
 MAX_HORIZON = 90      # max forecast horizon
 PRICE_FEAT = 8        # features per timestep
 FUND_FEAT = 8         # fundamental scalar features
-HIDDEN = 64
-LSTM_LAYERS = 2
-EPOCHS = 80
-BATCH_SIZE = 32
-LR = 1e-3
-MC_PASSES = 100       # Monte Carlo dropout runs for uncertainty
+HIDDEN = 32
+LSTM_LAYERS = 1
+EPOCHS = 15
+BATCH_SIZE = 64
+LR = 2e-3
+MC_PASSES = 20        # Monte Carlo dropout runs for uncertainty
 
 # In-memory model cache: (symbol, last_date) → (model, price_scaler, fund_vec)
 _model_cache: dict = {}
