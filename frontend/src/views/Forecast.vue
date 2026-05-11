@@ -173,8 +173,10 @@ const chartOption = computed(() => {
   // Band = lower base + (upper - lower) height, stacked
   const bandBase   = fcastLow
   const bandHeight = fcastHigh.map((h, i) => h - fcastLow[i])
-  const nullHist   = new Array(histDates.length).fill(null)
-  const nullFcast  = new Array(fcastDates.length).fill(null)
+  // Bridge point: forecast starts from the last historical price so lines connect
+  const lastHistPrice = histPrices[histPrices.length - 1] ?? 0
+  const nullHistBridge = new Array(histDates.length - 1).fill(null)
+  const nullFcast      = new Array(fcastDates.length).fill(null)
 
   return {
     backgroundColor: 'transparent',
@@ -202,21 +204,19 @@ const chartOption = computed(() => {
       },
       {
         name: 'Forecast', type:'line',
-        data:[...nullHist, ...fcastPrices],
+        data:[...nullHistBridge, lastHistPrice, ...fcastPrices],
         smooth: 0.5, symbol:'none', lineStyle:{color:'#81c995',width:2.5,type:'dashed'},
       },
-      // Band lower base (transparent fill, invisible line)
       {
         name: 'Band Base', type:'line',
-        data:[...nullHist, ...bandBase],
+        data:[...nullHistBridge, lastHistPrice, ...bandBase],
         smooth: 0.5, symbol:'none', lineStyle:{opacity:0},
         areaStyle:{color:'transparent'},
         stack:'conf_band', legendHoverLink: false, tooltip:{show:false},
       },
-      // Band height (the visible shaded region)
       {
         name: 'Confidence Band', type:'line',
-        data:[...nullHist, ...bandHeight],
+        data:[...nullHistBridge, 0, ...bandHeight],
         smooth: 0.5, symbol:'none', lineStyle:{opacity:0},
         areaStyle:{color:'rgba(129,201,149,0.13)'},
         stack:'conf_band',
