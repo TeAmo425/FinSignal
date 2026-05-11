@@ -173,8 +173,15 @@ const chartOption = computed(() => {
   // Band = lower base + (upper - lower) height, stacked
   const bandBase   = fcastLow
   const bandHeight = fcastHigh.map((h, i) => h - fcastLow[i])
-  // Bridge point: forecast starts from the last historical price so lines connect
+  // Shift all forecast values so the line starts exactly at the last historical price
   const lastHistPrice = histPrices[histPrices.length - 1] ?? 0
+  const offset = lastHistPrice - (fcastPrices[0] ?? lastHistPrice)
+  const shiftedFcast  = fcastPrices.map(v => v + offset)
+  const shiftedLow    = fcastLow.map(v => v + offset)
+  const shiftedHigh   = fcastHigh.map(v => v + offset)
+  const shiftedBase   = shiftedLow
+  const shiftedHeight = shiftedHigh.map((h, i) => h - shiftedLow[i])
+
   const nullHistBridge = new Array(histDates.length - 1).fill(null)
   const nullFcast      = new Array(fcastDates.length).fill(null)
 
@@ -204,19 +211,19 @@ const chartOption = computed(() => {
       },
       {
         name: 'Forecast', type:'line',
-        data:[...nullHistBridge, lastHistPrice, ...fcastPrices],
+        data:[...nullHistBridge, lastHistPrice, ...shiftedFcast],
         smooth: 0.5, symbol:'none', lineStyle:{color:'#81c995',width:2.5,type:'dashed'},
       },
       {
         name: 'Band Base', type:'line',
-        data:[...nullHistBridge, lastHistPrice, ...bandBase],
+        data:[...nullHistBridge, lastHistPrice, ...shiftedBase],
         smooth: 0.5, symbol:'none', lineStyle:{opacity:0},
         areaStyle:{color:'transparent'},
         stack:'conf_band', legendHoverLink: false, tooltip:{show:false},
       },
       {
         name: 'Confidence Band', type:'line',
-        data:[...nullHistBridge, 0, ...bandHeight],
+        data:[...nullHistBridge, 0, ...shiftedHeight],
         smooth: 0.5, symbol:'none', lineStyle:{opacity:0},
         areaStyle:{color:'rgba(129,201,149,0.13)'},
         stack:'conf_band',
