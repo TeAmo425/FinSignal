@@ -1,45 +1,46 @@
 # FinSignal — AI-Powered Financial Analysis Platform
 
-> 实时股票行情 + AI 多智能体投资分析平台
+> Real-time market data and multi-agent AI investment analysis
 
 **Live Demo:** [finsignal.app](https://finsignal.app)
 
-## 技术栈
+## Tech Stack
 
-| 层级 | 技术 |
-|------|------|
-| 前端 | Vue 3 · TypeScript · Vite · Pinia |
-| 后端 | FastAPI · SQLAlchemy · SQLite · MongoDB |
-| 缓存 | Redis |
+| Layer | Technologies |
+|-------|-------------|
+| Frontend | Vue 3 · TypeScript · Vite · Pinia |
+| Backend | FastAPI · SQLAlchemy · SQLite · MongoDB |
+| Cache | Redis |
 | AI | LangGraph · LangChain · TradingAgents · OpenAI / Anthropic / Google / DeepSeek |
-| 部署 | Docker Compose · Nginx · Let's Encrypt |
+| Deployment | Docker Compose · Nginx · Let's Encrypt |
 
-## 功能
+## Features
 
-- **Dashboard** — 实时股票行情（watchlist 5 支）、基本面快照、AI 分析缓存徽章
-- **AI 多智能体分析** — 市场、情绪、基本面多路 Agent 并行分析，SSE 实时流式输出，最终生成 BUY / SELL / HOLD 决策
-- **股票详情** — 历史 K 线、财务指标、同行业对比
-- **A 股支持** — 接入 A 股行情数据
-- **模拟交易** — Paper Trading 仓位管理
-- **JWT 认证** — 注册/登录，接口全局鉴权
+- **Dashboard** — Real-time watchlist prices, fundamentals snapshot, cached AI decision badges
+- **Multi-Agent AI Analysis** — Market, sentiment, and fundamentals agents run in parallel via LangGraph; results stream in real time over SSE; portfolio manager agent issues a final BUY / SELL / HOLD decision
+- **Stock Detail** — Price history charts, financial metrics, and peer comparison
+- **Price Forecast** — LSTM neural network + fundamental signals with confidence intervals
+- **Anomaly Detection** — Statistical detection of unusual price and volume movements
+- **Paper Trading** — Simulated portfolio management
+- **JWT Authentication** — Register / login with per-user API key storage and analysis history
 
-## 本地运行
+## Getting Started
 
 ```bash
-# 1. 复制环境变量模板
+# 1. Copy environment template
 cp backend/.env.example backend/.env
-# 编辑 backend/.env 填写 SECRET_KEY 等配置
+# Edit backend/.env and fill in SECRET_KEY and other config
 
-# 2. 启动所有服务
+# 2. Start all services
 docker compose up --build
 ```
 
-访问 http://localhost
+Visit http://localhost
 
-## 部署
+## Deployment
 
 ```bash
 bash deploy.sh
 ```
 
-需要提前配置根目录 `.env`（含 `REDIS_PASSWORD`）和 `backend/.env`。
+Requires a root-level `.env` (with `REDIS_PASSWORD`) and `backend/.env` to be configured before running.
